@@ -26,7 +26,12 @@
     :config {:store {:backend :mem :id "performance-hht"}
              :schema-flexibility :write
              :index :datahike.index/hitchhiker-tree}}
-   {:config-name "file"
+   {:config-name "file-set"
+    :config {:store {:backend :file :path "/tmp/performance-set"}
+             :schema-flexibility :write
+             :keep-history? false
+             :index :datahike.index/hitchhiker-tree}}
+   {:config-name "file-hht"
     :config {:store {:backend :file :path "/tmp/performance-hht"}
              :schema-flexibility :write
              :index :datahike.index/hitchhiker-tree}}])

@@ -4,11 +4,11 @@
 
 (def config {:output-format "edn"
              :data-types [:int :str]
-             :iterations 1, 
+             :iterations 1,
              :data-found-opts :all
              :tx-entity-counts [0 10]
-             :tag #{test} 
-             :query :all 
+             :tag #{test}
+             :query :all
              :db-entity-counts [0 10]})
 
 (deftest transaction-test
@@ -67,8 +67,8 @@
                           :name "mem-hht", :backend :mem}
               :function :connection, :db-entities 10, :db-datoms 40}
              {:dh-config {:schema-flexibility :write
-                          :keep-history? false
-                          :index :datahike.index/persistent-set
+                          :keep-history? false, :index
+                          :datahike.index/persistent-set
                           :name "mem-set", :backend :mem}
               :function :connection
               :db-entities 0
@@ -77,6 +77,32 @@
                           :keep-history? false
                           :index :datahike.index/persistent-set
                           :name "mem-set", :backend :mem}
+              :function :connection, :db-entities 10, :db-datoms 40}
+             {:dh-config {:schema-flexibility :write
+                          :keep-history? false
+                          :index :datahike.index/persistent-set
+                          :name "file-set", :backend :file}
+              :function :connection
+              :db-entities 0
+              :db-datoms 0}
+             {:dh-config {:schema-flexibility :write
+                          :keep-history? false
+                          :index :datahike.index/persistent-set
+                          :name "file-set", :backend :file}
+              :function :connection
+              :db-entities 10
+              :db-datoms 40}
+             {:dh-config {:schema-flexibility :write
+                          :keep-history? false
+                          :index :datahike.index/hitchhiker-tree
+                          :name "file-hht", :backend :file}
+              :function :connection
+              :db-entities 0
+              :db-datoms 0}
+             {:dh-config {:schema-flexibility :write
+                          :keep-history? false
+                          :index :datahike.index/hitchhiker-tree
+                          :name "file-hht", :backend :file}
               :function :connection
               :db-entities 10
               :db-datoms 40})
