@@ -777,13 +777,6 @@
    (db/-schema db)))
 
 (defn ^{:arglists '([db])
-        :doc "Returns database metrics"}
-  metrics
-  [db]
-  {:pre [(instance? DB db)]}
-  (db/metrics db))
-
-(defn ^{:arglists '([db])
         :doc "Returns current reverse schema definition."}
   reverse-schema
   [db]
@@ -800,3 +793,10 @@
          (assoc m k attrs))))
    {}
    (db/-rschema db)))
+
+(defn ^{:arglists '([db])
+        :doc "Returns database metrics"}
+  metrics
+  [db]
+  {:pre [(instance? DB db)]}
+  (db/metrics db))
