@@ -139,8 +139,7 @@
   (-keep-history? [db])
   (-config [db])
   (-ref-for [db a-ident])
-  (-ident-for [db a-ref])
-  (-metrics [db]))
+  (-ident-for [db a-ref]))
 
 (defprotocol IHistory
   (-time-point [db])
@@ -286,23 +285,6 @@
                     (warn (str "Attribute with reference number " a-ref " has not been found in database")))
                   a-ident)
                 a-ref))
-  (-metrics [db]
-            (let [attr-entity-counts (into {} (map (fn [[a d]] [a (group-by :e d)]) (group-by :a (-seq (.-eavt db)))))
-                  per-attr-counts
-                  (into {} (map (fn [[a ent-ds]] [a (reduce + 0 (map count (vals ent-ds)))]) attr-entity-counts))
-                  filter-idxed-attrs (fn [attr-kvs] (filter (fn [[k v]] (-> (.-rschema db) :db/index k)) attr-kvs))]
-              {:count (-count (.-eavt db))
-               :per-attr-counts per-attr-counts
-               :per-entity-counts (reduce (fn [oecs aecs]
-                                            (reduce-kv
-                                             (fn [ecs e c] (if (ecs e) (update ecs e #(+ % c)) (assoc ecs e c)))
-                                             oecs aecs))
-                                          {}
-                                          (map #(into {} (map (fn [[e d]] [e (count d)]) %)) (vals attr-entity-counts)))
-               :avet-count (reduce + 0 (map second (filter-idxed-attrs per-attr-counts)))
-               :temporal-count (-count (.-temporal-eavt db))
-               :temporal-avet-count
-               (reduce + 0 (map count (vals (filter-idxed-attrs (group-by :a (-seq (.-temporal-eavt db)))))))}))
 
   ISearch
   (-search [db pattern]
@@ -1052,6 +1034,25 @@
                        {:temporal-eavt (di/empty-index index :eavt index-config)
                         :temporal-aevt (di/empty-index index :aevt index-config)
                         :temporal-avet (di/empty-index index :avet index-config)}))))))
+
+(defn metrics [db]
+  {:pre [(instance? DB db)]}
+  (let [attr-entity-counts (into {} (map (fn [[a d]] [a (group-by :e d)]) (group-by :a (-seq (.-eavt db)))))
+        per-attr-counts
+        (into {} (map (fn [[a ent-ds]] [a (reduce + 0 (map count (vals ent-ds)))]) attr-entity-counts))
+        filter-idxed-attrs (fn [attr-kvs] (filter (fn [[k v]] (-> (.-rschema db) :db/index k)) attr-kvs))]
+    {:count (-count (.-eavt db))
+     :per-attr-counts per-attr-counts
+     :per-entity-counts (reduce (fn [oecs aecs]
+                                  (reduce-kv
+                                   (fn [ecs e c] (if (ecs e) (update ecs e #(+ % c)) (assoc ecs e c)))
+                                   oecs aecs))
+                                {}
+                                (map #(into {} (map (fn [[e d]] [e (count d)]) %)) (vals attr-entity-counts)))
+     :avet-count (reduce + 0 (map second (filter-idxed-attrs per-attr-counts)))
+     :temporal-count (-count (.-temporal-eavt db))
+     :temporal-avet-count
+     (reduce + 0 (map count (vals (filter-idxed-attrs (group-by :a (-seq (.-temporal-eavt db)))))))}))
 
 (defn- equiv-db-index [x y]
   (loop [xs (seq x)
