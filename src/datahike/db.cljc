@@ -1057,7 +1057,7 @@
                                         {}
                                         (->> (vals attr-entity-counts)
                                              (map #(->> (map (fn [[e d]] [e (count d)]) %)
-                                                        into {}))))
+                                                        (into {})))))
              :avet-count (->> (map second (filter-idxed-attrs per-attr-counts))
                               (reduce + 0))}
       (-keep-history? db)
