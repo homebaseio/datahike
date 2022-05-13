@@ -1037,36 +1037,30 @@
 
 (defn metrics [db]
   {:pre [(instance? DB db)]}
-  (let [attr-entity-counts (->> (-seq (.-eavt db))
-                                (group-by :a)
-                                (map (fn [[a datoms]] [a (group-by :e datoms)]))
-                                (into {}))
-        per-attr-counts (->> attr-entity-counts
-                             (map (fn [[a ent-ds]] [a (->> (map count (vals ent-ds))
-                                                           (reduce + 0))]))
-                             (into {}))
-        filter-idxed-attrs (fn [attr-kvs] (filter (fn [[k v]] (-> (.-rschema db) :db/index k))
-                                                  attr-kvs))]
-    (cond-> {:count (-count (.-eavt db))
-             :per-attr-counts per-attr-counts
-             :per-entity-counts (reduce (fn [oecs aecs]
-                                          (reduce-kv (fn [ecs e c] (if (ecs e)
-                                                                     (update ecs e #(+ % c))
-                                                                     (assoc ecs e c)))
-                                                     oecs aecs))
-                                        {}
-                                        (->> (vals attr-entity-counts)
-                                             (map #(->> (map (fn [[e d]] [e (count d)]) %)
-                                                        (into {})))))
-             :avet-count (->> (map second (filter-idxed-attrs per-attr-counts))
-                              (reduce + 0))}
+  (let [eavt-datoms (-seq (.-eavt db))
+        update-count (fn [m ks f] (f m ks #(if % (inc %) 1)))
+        counts-map (reduce (fn [m d]
+                             (-> (update-count m [:per-attr-counts (.-ident-for db (.-a d))] update-in)
+                                 (update-count [:per-entity-counts (.-e d)] update-in)))
+                           {:per-attr-counts    {}
+                            :per-entity-counts  {}}
+                           eavt-datoms)
+        temp-per-attr-counts (when (-keep-history? db)
+                               (reduce (fn [m d] (update-count m (.-ident-for db (.-a d)) update))
+                                       {}
+                                       (-seq (.-temporal-eavt db))))
+        filter-idxed-attrs (fn [attr-counts] (filter (fn [[a v]] (-> (:db/index (.-rschema db))
+                                                                     (contains? a)))
+                                                     attr-counts))
+        sum-attr-counts (fn [attr-counts] (->> (filter-idxed-attrs attr-counts)
+                                               (map second)
+                                               (reduce + 0)))]
+    (cond-> (merge counts-map
+                   {:count (-count (.-eavt db))
+                    :avet-count (sum-attr-counts (:per-attr-counts counts-map))})
       (-keep-history? db)
       (merge {:temporal-count (-count (.-temporal-eavt db))
-              :temporal-avet-count (->> (-seq (.-temporal-eavt db))
-                                        (group-by :a)
-                                        ((comp vals filter-idxed-attrs))
-                                        (map count)
-                                        (reduce + 0))}))))
+              :temporal-avet-count (sum-attr-counts temp-per-attr-counts)}))))
 
 (defn- equiv-db-index [x y]
   (loop [xs (seq x)

@@ -3,7 +3,9 @@
    #?(:cljs [cljs.test :as t :refer-macros [is are deftest testing]]
       :clj  [clojure.test :as t :refer [is are deftest testing use-fixtures]])
    [datahike.test.utils :as utils]
-   [datahike.api :as d]))
+   [datahike.api :as d]
+   [datahike.db :as db]
+   [datahike.constants :refer [tx0]]))
 
 (deftest test-transact-docs
   (let [cfg {:store {:backend :mem
@@ -754,3 +756,109 @@
         conn (utils/setup-db cfg)]
     (is (= #{:datahike/version :datahike/id :datahike/created-at :konserve/version :hitchhiker.tree/version}
            (-> @conn :meta keys set)))))
+
+(def ^:private metrics-base-cfg {:store              {:backend :mem}
+                                 :index              :datahike.index/hitchhiker-tree
+                                 :keep-history?      true
+                                 :schema-flexibility :write
+                                 :attribute-refs?    false})
+
+(defn test-metrics [cfg]
+  (let [schema              [{:db/ident       :name
+                              :db/cardinality :db.cardinality/one
+                              :db/index       true
+                              :db/unique      :db.unique/identity
+                              :db/valueType   :db.type/string}
+                             {:db/ident       :parents
+                              :db/cardinality :db.cardinality/many
+                              :db/valueType   :db.type/ref}
+                             {:db/ident       :age
+                              :db/cardinality :db.cardinality/one
+                              :db/valueType   :db.type/long}]
+        conn                (utils/setup-db cfg)
+        schema-on-write?    (= (:schema-flexibility (.-config @conn)) :write)
+        update-for-schema-on-write
+        (fn [metrics]
+          (-> (update metrics :count #(+ % 11))
+              (update :avet-count #(+ % 6))
+              ((fn [m] (merge-with merge m {:per-attr-counts     {:db/ident        3
+                                                                  :db/cardinality  3
+                                                                  :db/index        1
+                                                                  :db/unique       1
+                                                                  :db/valueType    3}
+                                            :per-entity-counts   {1          5
+                                                                  2          3
+                                                                  3          3
+                                                                  5          2
+                                                                  6          3}})))))
+        update-for-history
+        (fn [metrics schema-on-write?]
+          (->> (update metrics :count #(+ % 4))
+               (merge-with merge {:per-attr-counts     {:db/txInstant 4}
+                                  :per-entity-counts   {(+ tx0 1)  1
+                                                        (+ tx0 2)  1
+                                                        (+ tx0 3)  1
+                                                        (+ tx0 4)  1}
+                                  ; 10 == 11 minus 1 parent datom that wouldn't get added unless retracted
+                                  :temporal-count      (+ 11 (if schema-on-write? 10 0))
+                                  :temporal-avet-count (if schema-on-write? 9 0)})))
+        update-for-attr-refs
+        (fn [metrics]
+          (let [update-counts (fn [coll] (reduce (fn [m counted] (update m counted #(if % (inc %) 1)))
+                                                 {}
+                                                 coll))
+                ref-attrs (map #(.-ident-for @conn (.-a %)) db/ref-datoms)
+                ref-datom-per-attr-counts (update-counts ref-attrs)
+                indexed? (fn [a] (-> (:db/index (.-rschema @conn))
+                                     (contains? a)))]
+            (-> (update metrics :per-attr-counts #(merge-with + % ref-datom-per-attr-counts))
+                (assoc :per-entity-counts (update-counts (map :e (d/datoms @conn :eavt))))
+                (update :count #(+ % (count db/ref-datoms)))
+                (update :avet-count #(+ % 4 (count (filter indexed? ref-attrs)))))))
+        compare-vals
+        (fn [metrics expected]
+          (doseq [[metric val] metrics]
+            (testing (str (name metric) " is correct")
+              (is (= val (metric expected))))))]
+    (when schema-on-write?
+      (d/transact conn {:tx-data schema}))
+    (d/transact conn {:tx-data [{:name "Donald" :age  35}
+                                {:name "Daisy"  :age  35}]})
+    (if schema-on-write?
+      (do
+        (d/transact conn {:tx-data [{:name      "Dinky"
+                                     :age       5
+                                     :parents   [[:name "Donald"] [:name "Daisy"]]}]})
+        (d/transact conn {:tx-data [[:db/retractEntity [:name "Donald"]]]}))
+      (do
+        (d/transact conn {:tx-data [{:name      "Dinky"
+                                     :age       5}]})
+        (d/transact conn {:tx-data [[:db/add 3 :parents 1]
+                                    [:db/add 3 :parents 2]]})
+        (d/transact conn {:tx-data [[:db/retractEntity 1]]})))
+    (compare-vals (d/metrics @conn)
+                  (cond-> {:count               5
+                           :per-attr-counts     {:name     2
+                                                 :age      2
+                                                 :parents  1}
+                           :per-entity-counts   {2 2
+                                                 3 3}
+                           :avet-count          0}
+                    schema-on-write?  update-for-schema-on-write
+                    (db/-keep-history? @conn) (update-for-history schema-on-write?)
+                    (:attribute-refs? (.-config @conn)) update-for-attr-refs))))
+
+(deftest test-metrics-hht
+  (test-metrics metrics-base-cfg))
+
+(deftest test-metrics-pset
+  (test-metrics (assoc metrics-base-cfg :index :datahike.index/persistent-set)))
+
+(deftest test-metrics-history
+  (test-metrics (assoc metrics-base-cfg :keep-history? false)))
+
+(deftest test-metrics-schema-read
+  (test-metrics (assoc metrics-base-cfg :schema-flexibility :read)))
+
+(deftest test-metrics-attr-refs
+  (test-metrics (assoc metrics-base-cfg :attribute-refs? true)))
