@@ -12,9 +12,7 @@
                      :id "hashing"}
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)
+        conn (utils/setup-db cfg)
         dvec #(vector (:e %) (:a %) (:v %))]
     ;; add a single datom to an existing entity (1)
     (is (= [[1 :name "Ivan"]]
@@ -126,9 +124,7 @@
                      :id "hashing"}
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)]
+        conn (utils/setup-db cfg)]
     ;; add a single datom to an existing entity (1)
     (is (d/transact! conn [[:db/add 1 :name "Ivan"]]))))
 
@@ -143,9 +139,7 @@
                            :db/cardinality :db.cardinality/many}]
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)
+        conn (utils/setup-db cfg)
         dvec #(vector (:e %) (:a %) (:v %))]
     (is (d/transact conn [{:db/id 1
                            :name "Ivan"
@@ -173,9 +167,7 @@
                           [:db/add 2 :name "Oleg"]]
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)]
+        conn (utils/setup-db cfg)]
     (is (= (d/pull-many @conn [:db/id :name] [1 2])
            [{:db/id 1, :name "Ivan"}
             {:db/id 2, :name "Oleg"}]))))
@@ -189,9 +181,7 @@
                           [:db/add -1 :friend 296]]
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)]
+        conn (utils/setup-db cfg)]
     (is (= #{["fries"] ["candy"] ["pie"] ["pizza"]}
            (d/q '[:find ?value :where [_ :likes ?value]]
                 #{[1 :likes "fries"]
@@ -265,9 +255,7 @@
                      :id "with"}
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)
+        conn (utils/setup-db cfg)
         dvec #(vector (:e %) (:a %) (:v %))]
     ;; add a single datom to an existing entity (1)
     (let [res (d/with @conn {:tx-data [[:db/add 1 :name "Ivan"]]})]
@@ -288,9 +276,7 @@
                      :id "db"}
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)]
+        conn (utils/setup-db cfg)]
     (is (= datahike.db.DB
            (type (d/db conn))))
     (is (= datahike.db.DB
@@ -309,9 +295,7 @@
                            :db/cardinality :db.cardinality/one}]
              :keep-history? true
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)]
+        conn (utils/setup-db cfg)]
 
     (d/transact conn {:tx-data [{:name "Alice" :age 25} {:name "Bob" :age 30}]})
 
@@ -342,9 +326,7 @@
                            :db/cardinality :db.cardinality/one}]
              :keep-history? true
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)]
+        conn (utils/setup-db cfg)]
 
     (d/transact conn {:tx-data [{:name "Alice" :age 25} {:name "Bob" :age 30}]})
 
@@ -375,9 +357,7 @@
                            :db/cardinality :db.cardinality/one}]
              :keep-history? true
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        conn (d/connect cfg)]
+        conn (utils/setup-db cfg)]
     (d/transact conn {:tx-data [{:name "Alice" :age 25} {:name "Bob" :age 30}]})
 
     (Thread/sleep 100)
@@ -416,9 +396,7 @@
                            :db/cardinality :db.cardinality/many}]
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        db (d/connect cfg)
+        db (utils/setup-db cfg)
         _ (d/transact db [{:db/id 4 :name "Ivan"}
                           {:db/id 4 :likes "fries"}
                           {:db/id 4 :likes "pizza"}
@@ -560,9 +538,7 @@
                             :db/cardinality :db.cardinality/many}]
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        db (d/connect cfg)
+        db (utils/setup-db cfg)
         dvec #(vector (:e %) (:a %) (:v %))
         _ (d/transact db {:tx-data [{:db/id 4 :name "Ivan"}
                                     {:db/id 4 :likes "fries"}
@@ -612,9 +588,7 @@
                            :db/cardinality :db.cardinality/many}]
              :keep-history? false
              :schema-flexibility :read}
-        _ (d/delete-database cfg)
-        _ (d/create-database cfg)
-        db (d/connect cfg)
+        db (utils/setup-db cfg)
         dvec #(vector (:e %) (:a %) (:v %))
         _ (d/transact db {:tx-data [{:name "Ivan"}
                                     {:likes "fries"}
@@ -635,9 +609,7 @@
                        :id "hashing"}
                :keep-history? false
                :schema-flexibility :read}
-          _ (d/delete-database cfg)
-          _ (d/create-database cfg)
-          conn (d/connect cfg)
+          conn (utils/setup-db cfg false)
           hash-0 0]
       (testing "first hash equals zero"
         (is (= hash-0 (hash @conn))))
@@ -657,9 +629,7 @@
                        :id "hashing-with-history"}
                :keep-history? true
                :schema-flexibility :read}
-          _ (d/delete-database cfg)
-          _ (d/create-database cfg)
-          conn (d/connect cfg)
+          conn (utils/setup-db cfg false)
           hash-0 (hash @conn)]
       (testing "first hash equals zero"
         (is (= hash-0 (hash @conn))))
