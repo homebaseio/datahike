@@ -1,5 +1,5 @@
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        io.replikativ/datahike {:local/root ".."}
+        io.replikativ/datahike {:local/root "../.."}
         com.taoensso/timbre {:mvn/version "5.2.1"}}
  :aliases
  {:write-db
