@@ -3,6 +3,7 @@
             [datahike.datom :as d]
             [clojure.java.io :as io]
             [datahike.constants :as c]
+            [taoensso.timbre :as log]
             [clj-cbor.core :as cbor]))
 
 (def allowed-formats #{:plain :cbor})
@@ -74,7 +75,6 @@
      (api/transact conn (vec datoms))
      true)))
 
-
 (comment
 
   (def cfg {:store {:backend :file :path "/tmp/foobar"}
@@ -94,7 +94,7 @@
                         :db/valueType :db.type/string}
                        {:db/valueType :db.type/keyword
                         :db/ident :page/tags
-                        :db/cardinality :db.cardinality/many}]) 
+                        :db/cardinality :db.cardinality/many}])
 
   (api/delete-database cfg)
   (api/create-database cfg)
@@ -108,7 +108,7 @@
         tx-count (-> (/ size tx-size)
                      Math/ceil
                      long)]
-    (time (doseq [i (range tx-count )]
+    (time (doseq [i (range tx-count)]
             (let [from (* tx-size i)
                   to (* tx-size (inc i))
                   tx-data (mapv (fn [j]
@@ -118,6 +118,8 @@
                                    :page/tags [:tag1 :tag2 :tag3]})
                                 (range from (if (< size to) size to)))]
               (api/transact conn {:tx-data tx-data})))))
+
+  (log/set-level! :info)
 
   (time (export-db conn "/tmp/foobar.plain" {:format :plain}))
   (time (export-db conn "/tmp/foobar.cbor" {:format :cbor}))
@@ -130,8 +132,7 @@
   (def conn2 (api/connect cfg2))
 
   (time (import-db conn2 "/tmp/foobar.cbor" {:format :cbor}))
-
-  (taoensso.timbre/set-level! :info)
+  (time (import-db conn2 "/tmp/foobar.plain" {:format :plain}))
 
   )
 
