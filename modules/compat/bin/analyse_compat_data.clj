@@ -20,7 +20,7 @@
       "<td style=text-align:center>🟩</td>"
       "<td style=text-align:center>🟥</td>")))
 
-(let [[compat-folder] *command-line-args*]
+(let [[compat-folder output-file] *command-line-args*]
   (when (empty? compat-folder)
     (println "Usage: <compat-folder>")
     (System/exit 1))
@@ -46,5 +46,7 @@
                                               s/join)]
                             (s/join ["<tr>" row-data "</tr>"]))))
                   s/join)
-        html (s/join [header header-row body footer])]
-    (spit (format "%s/compat_overview.html" compat-folder) html)))
+        html (s/join [header header-row body footer])
+        output-file (or output-file (format "%s/compat_overview.html" compat-folder))]
+    (spit output-file html)
+    (println "Result written to" output-file)))

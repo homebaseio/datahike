@@ -6,7 +6,7 @@
 
 (defn read-with-latest [version]
   (println (format "Reading version %s with latest release..." version))
-  (-> (process ["clj" "-Sdeps" (str "{:deps {io.replikativ/datahike {:local/root \"..\"}}}") "-X:read-db" ":target-folder" "\"/home/konrad/data/datahike/compat\"" ":version" (format "\"%s\"" version)] {:out :string})
+  (-> (process ["clj" "-Sdeps" (str "{:deps {io.replikativ/datahike {:local/root \"../..\"}}}") "-X:read-db" ":target-folder" "\"/home/konrad/data/datahike/compat\"" ":version" (format "\"%s\"" version)] {:out :string})
       check
       :out
       println))
@@ -31,8 +31,8 @@
        (let [[_ minor patch] (str/split release #"\.")]
          (if (<= minimal-minor-version (parse-long minor))
            (if-not (contains? ignored-versions patch)
-             #_(read-with-latest release)
-             (read-with-lib-version release "0.4.1494")
+             (read-with-latest release)
+             #_(read-with-lib-version release "0.4.1494")
              (println "Ignored version:" release))
            (println "Outdated version:" release)))))))
 
