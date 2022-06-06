@@ -1,13 +1,19 @@
 {:deps {org.clojure/clojure                         {:mvn/version "1.11.1"}
         org.clojure/clojurescript                   {:mvn/version "1.11.4"}
         io.replikativ/hasch                         {:mvn/version "0.3.7"}
-        io.replikativ/hitchhiker-tree               {:mvn/version "0.1.11"}
+       ;;  io.replikativ/hitchhiker-tree               {:mvn/version "0.1.11"}
+        io.replikativ/hitchhiker-tree               {:git/url "https://github.com/homebaseio/hitchhiker-tree"
+                                                     :git/sha "cc59d3626324dedc444cdc88a527638533d82e9e"}
         io.replikativ/incognito                     {:mvn/version "0.3.66"}
-        io.replikativ/konserve                      {:mvn/version "0.6.0-alpha3"}
+       ;;  io.replikativ/konserve                      {:mvn/version "0.6.0-alpha3"}
+        io.replikativ/konserve                      {:git/url "https://github.com/homebaseio/konserve"
+                                                     :git/sha "875631694785b93072c07014a0bde5ea5a3c52d8"}
         persistent-sorted-set/persistent-sorted-set {:mvn/version "0.1.4"}
         environ/environ                             {:mvn/version "1.2.0"}
         com.taoensso/timbre                         {:mvn/version "5.2.1"}
-        io.replikativ/superv.async                  {:mvn/version "0.3.43"}
+       ;;  io.replikativ/superv.async                  {:mvn/version "0.3.43"}
+        io.replikativ/superv.async                  {:git/url "https://github.com/homebaseio/superv.async"
+                                                     :git/sha "0cd05df5352b482b50729ea3bbe63746e566ef7a"}
         io.lambdaforge/datalog-parser               {:mvn/version "0.1.11"}
         io.replikativ/zufall                        {:mvn/version "0.1.0"}
         junit/junit                                 {:mvn/version "4.13.2"}
