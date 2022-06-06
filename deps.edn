@@ -3,7 +3,7 @@
         io.replikativ/hasch                         {:mvn/version "0.3.7"}
        ;;  io.replikativ/hitchhiker-tree               {:mvn/version "0.1.11"}
         io.replikativ/hitchhiker-tree               {:git/url "https://github.com/homebaseio/hitchhiker-tree"
-                                                     :git/sha "56b51150aaf3b4cd3f779487ffefce38cccdd008"}
+                                                     :git/sha "24fcb0f6a3b48b2de2c3898f5441a5732f260c61"}
         io.replikativ/incognito                     {:mvn/version "0.3.66"}
        ;;  io.replikativ/konserve                      {:mvn/version "0.6.0-alpha3"}
         io.replikativ/konserve                      {:git/url "https://github.com/homebaseio/konserve"
