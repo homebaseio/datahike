@@ -4,10 +4,10 @@
   #?(:clj (:import [datahike.datom Datom])))
 
 (defn datom-to-vec [^Datom datom index-type start?]
-  (let [e (fn [datom] (when-not (or (and start? (= e0 (.-e datom)))
+  (let [e (fn [^Datom datom] (when-not (or (and start? (= e0 (.-e datom)))
                                     (and (not start?) (= emax (.-e datom))))
                         (.-e datom)))
-        tx (fn [datom] (when-not (or (and start? (= tx0 (.-tx datom)))
+        tx (fn [^Datom datom] (when-not (or (and start? (= tx0 (.-tx datom)))
                                      (and (not start?) (= txmax (.-tx datom))))
                          (.-tx datom)))
         datom-seq (case index-type

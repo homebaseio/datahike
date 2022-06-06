@@ -1462,7 +1462,7 @@
 ;; In context of `with-datom` we can use faster comparators which
 ;; do not check for nil (~10-15% performance gain in `transact`)
 
-(defn- with-datom [db ^Datom datom]
+(defn- with-datom [^DB db ^Datom datom]
   (validate-datom db datom)
   (let [{a-ident :ident} (attr-info db (.-a datom))
         indexing? (indexing? db a-ident)
@@ -1497,7 +1497,7 @@
           true (update :op-count + (if (or keep-history? indexing?) 2 1)))
         db))))
 
-(defn- with-temporal-datom [db ^Datom datom]
+(defn- with-temporal-datom [^DB db ^Datom datom]
   (let [{a-ident :ident} (attr-info db (.-a datom))
         indexing? (indexing? db a-ident)
         schema? (ds/schema-attr? a-ident)
@@ -1535,14 +1535,14 @@
    tuples))
 (defn validate-datom-upsert [db ^Datom datom]
   (when (is-attr? db (.-a datom) :db/unique)
-    (when-let [old (first (-datoms db :avet [(.-a datom) (.-v datom)]))]
+    (when-let [^Datom old (first (-datoms db :avet [(.-a datom) (.-v datom)]))]
       (when-not (= (.-e datom) (.-e old))
         (raise "Cannot add " datom " because of unique constraint: " old
                {:error     :transact/unique
                 :attribute (.-a datom)
                 :datom     datom})))))
 
-(defn- with-datom-upsert [db ^Datom datom]
+(defn- with-datom-upsert [^DB db ^Datom datom]
   (validate-datom-upsert db datom)
   (let [indexing?     (indexing? db (.-a datom))
         {a-ident :ident} (attr-info db (.-a datom))

@@ -99,13 +99,13 @@
 (defmethod empty-store :file [{:keys [path]}]
   (ups/add-upsert-handler
    (kons/add-hitchhiker-tree-handlers
-    (<?? S (fs/new-fs-store path)))))
+    (<?? S (fs/connect-fs-store path)))))
 
 (defmethod delete-store :file [{:keys [path]}]
   (fs/delete-store path))
 
 (defmethod connect-store :file [{:keys [path]}]
-  (<?? S (fs/new-fs-store path)))
+  (<?? S (fs/connect-fs-store path)))
 
 (defmethod scheme->index :file [_]
   :datahike.index/hitchhiker-tree)

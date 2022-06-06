@@ -7,7 +7,7 @@
   "Returns true if elements in vector 'indices' form a prefix of the vector indices.
   This is equivalent to check whether the elements increase by one and contains 0.
   E.g., [0 1 2] => true, [0 2 3] => false, [1 2] => false."
-  [indices]
+  [^clojure.lang.PersistentVector indices]
   (if (.contains indices 0)
     (let [m (apply max indices)
           s (apply + indices)]

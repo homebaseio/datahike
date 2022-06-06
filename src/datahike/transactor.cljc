@@ -1,5 +1,5 @@
 (ns ^:no-doc datahike.transactor
-  (:require [superv.async :refer [<??- S thread-try]]
+  (:require [superv.async :refer [go-try- <?- S go-loop-super]]
             [taoensso.timbre :as log]
             [clojure.core.async :refer [>!! chan close! promise-chan put!]])
   (:import [clojure.lang ExceptionInfo]))
@@ -22,23 +22,23 @@
     rx-thread))
 
 (defn create-rx-thread
-  "Creates new transaction thread"
   [connection rx-queue update-and-flush-db]
-  (thread-try
-   S
-   (let [resolve-fn (memoize resolve)]
-     (loop []
-       (if-let [{:keys [tx-data tx-meta callback tx-fn]} (<??- rx-queue)]
-         (do
-           (let [update-fn (resolve-fn tx-fn)
-                 tx-report (try (update-and-flush-db connection tx-data tx-meta update-fn)
+  (let [resolve-fn (memoize resolve)]
+    (go-loop-super S []
+                   (if-let [{:keys [tx-data tx-meta callback tx-fn]} (<?- rx-queue)]
+                     (do
+                       (let [update-fn (resolve-fn tx-fn)
+                             tx-report (try (update-and-flush-db connection tx-data tx-meta update-fn)
                                  ; Only catch ExceptionInfo here (intentionally rejected transactions).
                                  ; Any other exceptions should crash the transactor and signal the supervisor.
-                                (catch ExceptionInfo e e))]
-             (when (some? callback)
-               (put! callback tx-report)))
-           (recur))
-         (log/debug "Transactor rx thread gracefully closed"))))))
+                                            (catch Exception e
+                                              (log/trace "Exception in transactor: " e)
+                                              e))]
+                         (when (some? callback)
+                           (put! callback tx-report)))
+                       (recur))
+                     (do
+                       (log/debug "Transactor rx thread gracefully closed"))))))
 
 (defmulti create-transactor
   (fn [transactor-config conn update-and-flush-db]

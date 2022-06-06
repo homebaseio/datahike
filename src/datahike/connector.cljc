@@ -25,7 +25,7 @@
   (let [{:keys [db-after] :as tx-report} @(update-fn connection tx-data tx-meta)
         {:keys [eavt aevt avet temporal-eavt temporal-aevt temporal-avet schema rschema system-entities ident-ref-map ref-ident-map config max-tx max-eid op-count hash meta]} db-after
         store (:store @connection)
-        backend (kons/->KonserveBackend store)
+        backend (kons/->KonserveBackend store true)
         eavt-flushed (di/-flush eavt backend)
         aevt-flushed (di/-flush aevt backend)
         avet-flushed (di/-flush avet backend)
@@ -192,7 +192,7 @@
               (dt/raise "Database already exists." {:type :db-already-exists :config store-config}))
           {:keys [eavt aevt avet temporal-eavt temporal-aevt temporal-avet schema rschema system-entities ref-ident-map ident-ref-map config max-tx max-eid op-count hash meta]}
           (db/empty-db nil config)
-          backend (kons/->KonserveBackend store)]
+          backend (kons/->KonserveBackend store true)]
       (<?? S (k/assoc-in store [:db]
                          (merge {:schema schema
                                  :max-tx max-tx
